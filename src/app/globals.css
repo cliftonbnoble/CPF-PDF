@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better checkbox styling */
+input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Signature canvas styling */
+.signature-canvas {
+  touch-action: none;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

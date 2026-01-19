@@ -1,0 +1,32 @@
+{
+  "name": "chp108a-inspector",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 4000",
+    "build": "next build",
+    "build:cloudflare": "next build",
+    "start": "next start -p 4000",
+    "lint": "next lint",
+    "preview": "npx serve out"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0",
+    "next": "^14.2.35",
+    "pdf-lib": "^1.17.1",
+    "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-signature-canvas": "^1.0.6"
+  },
+  "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
+    "@types/node": "^22.7.5",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.3"
+  }
+}
