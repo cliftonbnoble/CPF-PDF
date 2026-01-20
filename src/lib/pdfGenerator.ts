@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
 import { InspectionFormData, MONTHS, MONTH_FULL_NAMES, INSPECTION_ITEMS, Month } from '@/types/inspection';
-import { formatDateForPDF } from './dateUtils';
+import { formatDateForPDF, getMonthAbbreviation } from './dateUtils';
 
 // Page dimensions (Letter size - Landscape)
 const PAGE_WIDTH = 792;
@@ -257,7 +257,7 @@ async function drawPage1(
   for (let i = 0; i < 12; i++) {
     const month = MONTHS[i];
     const colX = tableStartX + itemNumWidth + itemDescWidth + (i * monthColWidth);
-    
+
     // Mileage cell (top)
     drawRect(page, colX, headerY - 10, monthColWidth, 10);
     page.drawText('MILEAGE', {
@@ -267,7 +267,7 @@ async function drawPage1(
       font: font,
       color: GRAY,
     });
-    
+
     // Mileage value
     const mileage = months[month].mileage;
     if (mileage) {
@@ -279,12 +279,17 @@ async function drawPage1(
         color: BLACK,
       });
     }
-    
+
     // Month header box (below mileage)
     drawRect(page, colX, headerY - headerRowHeight, monthColWidth, 10);
-    
+
+    // Get the actual calendar month from the date, or use the fixed month
+    const displayMonth = months[month].date
+      ? getMonthAbbreviation(months[month].date)
+      : month;
+
     // Month name centered
-    drawCenteredText(page, month, colX, headerY - 17, monthColWidth, boldFont, SMALL_SIZE);
+    drawCenteredText(page, displayMonth, colX, headerY - 17, monthColWidth, boldFont, SMALL_SIZE);
     
     // OK/DEF sub-header
     drawCenteredText(page, 'OK', colX, headerY - headerRowHeight + 2, okDefWidth, font, 4);
@@ -385,9 +390,14 @@ async function drawPage1(
       const month = MONTHS[monthIndex];
       const monthData = months[month];
       const boxX = tableStartX + (col * (dateBoxWidth + 10));
-      
+
+      // Get the actual calendar month from the date, or use the fixed month
+      const displayMonthFull = monthData.date
+        ? MONTH_FULL_NAMES[getMonthAbbreviation(monthData.date)]
+        : MONTH_FULL_NAMES[month];
+
       // Month name label
-      page.drawText(`${MONTH_FULL_NAMES[month].toUpperCase()}:`, {
+      page.drawText(`${displayMonthFull.toUpperCase()}:`, {
         x: boxX,
         y: rowY - 8,
         size: TINY_SIZE,
@@ -434,12 +444,17 @@ async function drawPage1(
       const monthData = months[month];
       const boxX = tableStartX + (col * (sigBoxWidth + 10));
       const boxY = sigStartY - (row * (sigBoxHeight + 3));
-      
+
       // Draw signature box
       drawRect(page, boxX, boxY - sigBoxHeight, sigBoxWidth, sigBoxHeight);
-      
+
+      // Get the actual calendar month from the date, or use the fixed month
+      const displayMonth = monthData.date
+        ? getMonthAbbreviation(monthData.date)
+        : month;
+
       // Month label
-      page.drawText(`${month} INSPECTION`, {
+      page.drawText(`${displayMonth} INSPECTION`, {
         x: boxX + 2,
         y: boxY - 8,
         size: TINY_SIZE,

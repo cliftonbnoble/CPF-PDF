@@ -1,38 +1,67 @@
-import { addDays, format, parseISO, isValid } from 'date-fns';
+import { addDays, format, parseISO, isValid, getMonth } from 'date-fns';
 import { Month, MONTHS } from '@/types/inspection';
 
 /**
- * Calculate inspection dates starting from January date, adding 45 days for each subsequent month.
- * Returns a map of month -> calculated date string.
+ * Get the month abbreviation from a date string
  */
-export function calculateInspectionDates(januaryDateStr: string): Record<Month, string> {
+export function getMonthAbbreviation(dateStr: string): Month {
+  if (!dateStr) return 'JAN';
+
+  const date = parseISO(dateStr);
+  if (!isValid(date)) return 'JAN';
+
+  const monthIndex = getMonth(date); // 0-11
+  return MONTHS[monthIndex];
+}
+
+/**
+ * Calculate inspection dates starting from first date, adding 45 days for each subsequent inspection.
+ * Returns an array of 12 inspection records with calculated dates and corresponding month labels.
+ */
+export function calculateInspectionDates(firstDateStr: string): Record<Month, string> {
   const result: Record<Month, string> = {} as Record<Month, string>;
-  
+
   // Initialize all months with empty string
   for (const month of MONTHS) {
     result[month] = '';
   }
-  
-  if (!januaryDateStr) {
+
+  if (!firstDateStr) {
     return result;
   }
-  
-  const januaryDate = parseISO(januaryDateStr);
-  if (!isValid(januaryDate)) {
+
+  const firstDate = parseISO(firstDateStr);
+  if (!isValid(firstDate)) {
     return result;
   }
-  
-  // January gets the original date
-  result.JAN = januaryDateStr;
-  
-  // Calculate subsequent months by adding 45 days for each
-  let currentDate = januaryDate;
-  
-  for (let i = 1; i < MONTHS.length; i++) {
-    currentDate = addDays(currentDate, 45);
-    result[MONTHS[i]] = format(currentDate, 'yyyy-MM-dd');
+
+  // Calculate 12 inspections, each 45 days apart
+  // Assign each date to the month key that matches the actual calendar month
+  let currentDate = firstDate;
+  const usedMonths = new Set<Month>();
+
+  for (let i = 0; i < 12; i++) {
+    const dateStr = format(currentDate, 'yyyy-MM-dd');
+    const monthAbbrev = getMonthAbbreviation(dateStr);
+
+    // If this month is already used, find the next available month
+    let targetMonth = monthAbbrev;
+    let monthIndex = MONTHS.indexOf(monthAbbrev);
+
+    while (usedMonths.has(targetMonth)) {
+      monthIndex = (monthIndex + 1) % 12;
+      targetMonth = MONTHS[monthIndex];
+    }
+
+    result[targetMonth] = dateStr;
+    usedMonths.add(targetMonth);
+
+    // Add 45 days for next inspection
+    if (i < 11) {
+      currentDate = addDays(currentDate, 45);
+    }
   }
-  
+
   return result;
 }
 

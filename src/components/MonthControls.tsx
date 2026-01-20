@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Month, MONTHS, MONTH_FULL_NAMES, MonthInspection } from '@/types/inspection';
-import { formatDateForDisplay } from '@/lib/dateUtils';
+import { formatDateForDisplay, getMonthAbbreviation } from '@/lib/dateUtils';
 
 interface MonthControlsProps {
   monthsData: Record<Month, MonthInspection>;
@@ -106,11 +106,16 @@ export default function MonthControls({
               const data = monthsData[month];
               const isJanuary = month === 'JAN';
               const canSign = currentSignature && (data.ok || data.def) && !data.signature;
-              
+
+              // Get the actual calendar month from the date, or fall back to the fixed month name
+              const displayMonth = data.date
+                ? MONTH_FULL_NAMES[getMonthAbbreviation(data.date)]
+                : MONTH_FULL_NAMES[month];
+
               return (
                 <tr key={month} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="font-medium text-gray-900">{MONTH_FULL_NAMES[month]}</span>
+                    <span className="font-medium text-gray-900">{displayMonth}</span>
                     {isJanuary && (
                       <span className="ml-2 text-xs text-blue-600">(Enter date here)</span>
                     )}
