@@ -10,6 +10,7 @@ const PAGE_HEIGHT = 612;
 const BLACK = rgb(0, 0, 0);
 const GRAY = rgb(0.4, 0.4, 0.4);
 const RED = rgb(0.7, 0, 0);
+const BLUE = rgb(0, 0, 0.7);
 
 // Font sizes
 const TITLE_SIZE = 12;
@@ -82,30 +83,30 @@ async function drawPage1(
   // Margins
   const marginLeft = 20;
   const marginRight = 20;
-  const marginTop = 25;
+  const marginTop = 18;
   
   // === HEADER SECTION ===
   let currentY = PAGE_HEIGHT - marginTop;
-  
+
   // Title - left side
   page.drawText('STATE OF CALIFORNIA', {
     x: marginLeft,
     y: currentY,
-    size: SMALL_SIZE,
+    size: TEXT_SIZE,
     font: font,
     color: BLACK,
   });
-  
+
   currentY -= 8;
   page.drawText('DEPARTMENT OF CALIFORNIA HIGHWAY PATROL', {
     x: marginLeft,
     y: currentY,
-    size: SMALL_SIZE,
+    size: TEXT_SIZE,
     font: font,
     color: BLACK,
   });
-  
-  currentY -= 12;
+
+  currentY -= 11;
   page.drawText('BUS MAINTENANCE & SAFETY INSPECTION', {
     x: marginLeft,
     y: currentY,
@@ -113,194 +114,213 @@ async function drawPage1(
     font: boldFont,
     color: BLACK,
   });
-  
-  currentY -= 10;
+
+  currentY -= 9;
   page.drawText('CHP 108A (Rev. 7-05) OPI 062', {
     x: marginLeft,
     y: currentY,
-    size: TINY_SIZE,
+    size: TEXT_SIZE,  // Increased from SMALL_SIZE
     font: font,
-    color: GRAY,
+    color: BLACK,
   });
-  
-  // CVC note on right side
+
+  // CVC note on right side - aligned to top right
   page.drawText('* Inspection of these items meet the minimum requirements of 34505 CVC', {
-    x: PAGE_WIDTH - marginRight - 240,
-    y: currentY,
-    size: TINY_SIZE,
+    x: PAGE_WIDTH - marginRight - 285,
+    y: PAGE_HEIGHT - marginTop,
+    size: SMALL_SIZE,
     font: font,
     color: RED,
   });
   
-  // === VEHICLE INFO SECTION ===
-  currentY -= 18;
-  const vehicleRowHeight = 22;
-  
-  // Row 1: Carrier Name and Unit Number
-  const carrierWidth = 250;
-  const unitNumX = marginLeft + carrierWidth + 30;
-  
-  // Carrier Name
-  drawRect(page, marginLeft, currentY - vehicleRowHeight, carrierWidth, vehicleRowHeight);
-  page.drawText('CARRIER NAME', {
-    x: marginLeft + 2,
-    y: currentY - 6,
-    size: TINY_SIZE,
-    font: font,
-    color: GRAY,
-  });
-  page.drawText(vehicle.carrierName || '', {
-    x: marginLeft + 60,
-    y: currentY - 6,
-    size: TEXT_SIZE,
-    font: boldFont,
-    color: BLACK,
-  });
-  
-  // Unit Number
-  drawRect(page, unitNumX, currentY - vehicleRowHeight, 100, vehicleRowHeight);
-  page.drawText('UNIT NUMBER', {
-    x: unitNumX + 2,
-    y: currentY - 6,
-    size: TINY_SIZE,
-    font: font,
-    color: GRAY,
-  });
-  page.drawText(vehicle.unitNumber || '', {
-    x: unitNumX + 60,
-    y: currentY - 6,
-    size: TEXT_SIZE,
-    font: boldFont,
-    color: BLACK,
-  });
-  
-  // Row 2: Year, Make, License Number
-  currentY -= vehicleRowHeight + 2;
-  
-  // Year
-  drawRect(page, marginLeft, currentY - vehicleRowHeight, 60, vehicleRowHeight);
-  page.drawText('YEAR', {
-    x: marginLeft + 2,
-    y: currentY - 6,
-    size: TINY_SIZE,
-    font: font,
-    color: GRAY,
-  });
-  page.drawText(vehicle.year || '', {
-    x: marginLeft + 30,
-    y: currentY - 6,
-    size: TEXT_SIZE,
-    font: boldFont,
-    color: BLACK,
-  });
-  
-  // Make
-  drawRect(page, marginLeft + 60, currentY - vehicleRowHeight, 120, vehicleRowHeight);
-  page.drawText('MAKE', {
-    x: marginLeft + 62,
-    y: currentY - 6,
-    size: TINY_SIZE,
-    font: font,
-    color: GRAY,
-  });
-  page.drawText(vehicle.make || '', {
-    x: marginLeft + 90,
-    y: currentY - 6,
-    size: TEXT_SIZE,
-    font: boldFont,
-    color: BLACK,
-  });
-  
-  // License Number
-  drawRect(page, marginLeft + 180, currentY - vehicleRowHeight, 100, vehicleRowHeight);
-  page.drawText('LICENSE NUMBER', {
-    x: marginLeft + 182,
-    y: currentY - 6,
-    size: TINY_SIZE,
-    font: font,
-    color: GRAY,
-  });
-  page.drawText(vehicle.licenseNumber || '', {
-    x: marginLeft + 250,
-    y: currentY - 6,
-    size: TEXT_SIZE,
-    font: boldFont,
-    color: BLACK,
-  });
-  
-  // === MAIN INSPECTION TABLE ===
-  currentY -= vehicleRowHeight + 8;
-  const tableStartY = currentY;
-  const tableStartX = marginLeft;
-  
+  // === VEHICLE INFO AND TABLE HEADER SECTION ===
+  currentY -= 10;
+  const headerRow1Height = 20;
+  const headerRow2Height = 20;
+
   // Column widths
   const itemNumWidth = 20;
   const itemDescWidth = 240;
   const monthColWidth = 42;
   const okDefWidth = monthColWidth / 2;
 
-  // Row heights
-  const headerRowHeight = 20;
-  const dataRowHeight = 9.8;
-  
-  // Calculate table dimensions
-  const totalMonthsWidth = monthColWidth * 12;
-  const tableWidth = itemNumWidth + itemDescWidth + totalMonthsWidth;
-  
-  // === HEADER ROW (Month names with OK/DEF) ===
-  const headerY = tableStartY;
-  
-  // Item number/description header area (spans two rows visually)
-  drawRect(page, tableStartX, headerY - headerRowHeight, itemNumWidth + itemDescWidth, headerRowHeight);
-  
-  // Month column headers with Mileage row above
+  const tableStartX = marginLeft;
+  const tableStartY = currentY;
+
+  // === ROW 1: CARRIER NAME | UNIT NUMBER | MILEAGE×12 ===
+  let colX = tableStartX;
+
+  // CARRIER NAME (wider)
+  const carrierWidth = 180;
+  drawRect(page, colX, currentY - headerRow1Height, carrierWidth, headerRow1Height);
+  page.drawText('CARRIER NAME', {
+    x: colX + 3,
+    y: currentY - 6,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.carrierName || '', {
+    x: colX + 3,
+    y: currentY - 16,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += carrierWidth;
+
+  // UNIT NUMBER
+  const unitWidth = 80;
+  drawRect(page, colX, currentY - headerRow1Height, unitWidth, headerRow1Height);
+  page.drawText('UNIT NUMBER', {
+    x: colX + 3,
+    y: currentY - 6,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.unitNumber || '', {
+    x: colX + 3,
+    y: currentY - 16,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += unitWidth;
+
+  // 12 MILEAGE headers
   for (let i = 0; i < 12; i++) {
     const month = MONTHS[i];
-    const colX = tableStartX + itemNumWidth + itemDescWidth + (i * monthColWidth);
-
-    // Mileage cell (top)
-    drawRect(page, colX, headerY - 10, monthColWidth, 10);
+    drawRect(page, colX, currentY - headerRow1Height, monthColWidth, headerRow1Height);
     page.drawText('MILEAGE', {
-      x: colX + 3,
-      y: headerY - 8,
-      size: 4,
+      x: colX + 2,
+      y: currentY - 6,
+      size: TINY_SIZE,
       font: font,
-      color: GRAY,
+      color: BLUE,
     });
-
-    // Mileage value
+    // Add mileage value
     const mileage = months[month].mileage;
     if (mileage) {
-      page.drawText(mileage, {
-        x: colX + 20,
-        y: headerY - 8,
-        size: 4,
-        font: font,
-        color: BLACK,
-      });
+      drawCenteredText(page, mileage, colX, currentY - 16, monthColWidth, font, SMALL_SIZE, BLACK);
     }
+    colX += monthColWidth;
+  }
 
-    // Month header box (below mileage)
-    drawRect(page, colX, headerY - headerRowHeight, monthColWidth, 10);
+  // === ROW 2: Vehicle data + Month names with OK/DEF ===
+  currentY -= headerRow1Height;
+  colX = tableStartX;
 
-    // Get the actual calendar month from the date, or use the fixed month
-    const displayMonth = months[month].date
-      ? getMonthAbbreviation(months[month].date)
+  // Year (50), Make (130), License (80) = 260 total to match row 1
+  const yearWidth = 50;
+  const makeWidth = 130;
+  const licenseWidth = 80;
+
+  // YEAR
+  drawRect(page, colX, currentY - headerRow2Height, yearWidth, headerRow2Height);
+  page.drawText('YEAR', {
+    x: colX + 3,
+    y: currentY - 6,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.year || '', {
+    x: colX + 3,
+    y: currentY - 16,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += yearWidth;
+
+  // MAKE
+  drawRect(page, colX, currentY - headerRow2Height, makeWidth, headerRow2Height);
+  page.drawText('MAKE', {
+    x: colX + 3,
+    y: currentY - 6,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.make || '', {
+    x: colX + 3,
+    y: currentY - 16,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += makeWidth;
+
+  // LICENSE NUMBER
+  drawRect(page, colX, currentY - headerRow2Height, licenseWidth, headerRow2Height);
+  page.drawText('LICENSE NUMBER', {
+    x: colX + 3,
+    y: currentY - 6,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.licenseNumber || '', {
+    x: colX + 3,
+    y: currentY - 16,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += licenseWidth;
+
+  // Month columns with OK/DEF
+  for (let i = 0; i < 12; i++) {
+    const month = MONTHS[i];
+    const monthData = months[month];
+
+    // Get display month
+    const displayMonth = monthData.date
+      ? getMonthAbbreviation(monthData.date)
       : month;
 
-    // Month name centered
-    drawCenteredText(page, displayMonth, colX, headerY - 17, monthColWidth, boldFont, SMALL_SIZE);
-    
-    // OK/DEF sub-header
-    drawCenteredText(page, 'OK', colX, headerY - headerRowHeight + 2, okDefWidth, font, 4);
-    drawCenteredText(page, 'DEF', colX + okDefWidth, headerY - headerRowHeight + 2, okDefWidth, font, 4);
-    
-    // Vertical line between OK and DEF in header
-    drawLine(page, colX + okDefWidth, headerY - 10, colX + okDefWidth, headerY - headerRowHeight);
+    // Draw full column box first
+    drawRect(page, colX, currentY - headerRow2Height, monthColWidth, headerRow2Height);
+
+    // Month name at top
+    page.drawText(displayMonth, {
+      x: colX + (monthColWidth / 2) - 6,
+      y: currentY - 7,
+      size: SMALL_SIZE,
+      font: boldFont,
+      color: BLUE,
+    });
+
+    // OK and DEF boxes (bottom half) - just internal dividers
+    page.drawLine({
+      start: { x: colX, y: currentY - (headerRow2Height / 2) },
+      end: { x: colX + monthColWidth, y: currentY - (headerRow2Height / 2) },
+      thickness: 0.5,
+      color: BLACK,
+    });
+    page.drawLine({
+      start: { x: colX + okDefWidth, y: currentY - (headerRow2Height / 2) },
+      end: { x: colX + okDefWidth, y: currentY - headerRow2Height },
+      thickness: 0.5,
+      color: BLACK,
+    });
+
+    // OK and DEF labels
+    drawCenteredText(page, 'OK', colX, currentY - 16, okDefWidth, font, TINY_SIZE, BLACK);
+    drawCenteredText(page, 'DEF', colX + okDefWidth, currentY - 16, okDefWidth, font, TINY_SIZE, BLACK);
+
+    colX += monthColWidth;
   }
-  
+
+  // Set currentY to after row 2 for the inspection items table
+  currentY = tableStartY - headerRow1Height - headerRow2Height - 2;
+
+  // Row heights for inspection items
+  const dataRowHeight = 9.8;
+
   // === INSPECTION ITEMS (40 rows) ===
-  const dataStartY = headerY - headerRowHeight;
+  const dataStartY = currentY;
   
   for (let row = 0; row < 40; row++) {
     const rowY = dataStartY - (row * dataRowHeight);
@@ -363,87 +383,37 @@ async function drawPage1(
     }
   }
   
-  // === INSPECTION DATES SECTION ===
-  const tableEndY = dataStartY - (40 * dataRowHeight);
-  let sigSectionY = tableEndY - 12;
-  
-  page.drawText('INSPECTION DATES:', {
-    x: tableStartX,
-    y: sigSectionY,
-    size: SMALL_SIZE,
-    font: boldFont,
-    color: BLACK,
-  });
-  
-  // Draw inspection dates in 3 rows of 4 months
-  const dateBoxWidth = 170;
-  const dateBoxHeight = 12;
-  sigSectionY -= 5;
-  
-  for (let row = 0; row < 3; row++) {
-    const rowY = sigSectionY - (row * (dateBoxHeight + 2));
-    
-    for (let col = 0; col < 4; col++) {
-      const monthIndex = row * 4 + col;
-      if (monthIndex >= 12) continue;
-      
-      const month = MONTHS[monthIndex];
-      const monthData = months[month];
-      const boxX = tableStartX + (col * (dateBoxWidth + 10));
-
-      // Get the actual calendar month from the date, or use the fixed month
-      const displayMonthFull = monthData.date
-        ? MONTH_FULL_NAMES[getMonthAbbreviation(monthData.date)]
-        : MONTH_FULL_NAMES[month];
-
-      // Month name label
-      page.drawText(`${displayMonthFull.toUpperCase()}:`, {
-        x: boxX,
-        y: rowY - 8,
-        size: TINY_SIZE,
-        font: boldFont,
-        color: BLACK,
-      });
-      
-      // Date value
-      const dateStr = formatDateForPDF(monthData.date);
-      if (dateStr) {
-        page.drawText(dateStr, {
-          x: boxX + 55,
-          y: rowY - 8,
-          size: TINY_SIZE,
-          font: font,
-          color: BLACK,
-        });
-      }
-    }
-  }
-  
   // === SIGNATURES OF INSPECTORS SECTION ===
-  sigSectionY -= (3 * (dateBoxHeight + 2)) + 10;
-  
+  // Position signature section near the bottom, above the footer
+  const footerY = 15;
+  const sigSectionHeight = 70; // Height needed for 3 rows of signatures + label
+  let sigSectionY = footerY + sigSectionHeight;
+
   page.drawText('SIGNATURES OF INSPECTORS', {
     x: tableStartX,
     y: sigSectionY,
     size: SMALL_SIZE,
     font: boldFont,
-    color: BLACK,
+    color: BLUE,
   });
-  
+
   // Draw signature boxes in 3 rows of 4 months
-  const sigBoxWidth = 170;
-  const sigBoxHeight = 25;
+  // Calculate width to utilize full page width: (pageWidth - margins - spacing) / 4
+  const horizontalSpacing = 8;
+  const availableWidth = PAGE_WIDTH - marginLeft - marginRight - (3 * horizontalSpacing);
+  const sigBoxWidth = Math.floor(availableWidth / 4);
+  const sigBoxHeight = 20;  // Shorter to reduce dead space
   const sigStartY = sigSectionY - 5;
   
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 4; col++) {
       const monthIndex = row * 4 + col;
       if (monthIndex >= 12) continue;
-      
+
       const month = MONTHS[monthIndex];
       const monthData = months[month];
-      const boxX = tableStartX + (col * (sigBoxWidth + 10));
-      const boxY = sigStartY - (row * (sigBoxHeight + 3));
+      const boxX = tableStartX + (col * (sigBoxWidth + horizontalSpacing));
+      const boxY = sigStartY - (row * (sigBoxHeight + 1));
 
       // Draw signature box
       drawRect(page, boxX, boxY - sigBoxHeight, sigBoxWidth, sigBoxHeight);
@@ -453,42 +423,37 @@ async function drawPage1(
         ? getMonthAbbreviation(monthData.date)
         : month;
 
-      // Month label
-      page.drawText(`${displayMonth} INSPECTION`, {
-        x: boxX + 2,
-        y: boxY - 8,
-        size: TINY_SIZE,
-        font: boldFont,
-        color: BLACK,
-      });
-      
-      // Date label and value on right
-      page.drawText('DATE', {
-        x: boxX + sigBoxWidth - 45,
-        y: boxY - 8,
-        size: TINY_SIZE,
-        font: font,
-        color: BLACK,
-      });
-      
-      const dateStr = formatDateForPDF(monthData.date);
-      if (dateStr) {
-        page.drawText(dateStr, {
-          x: boxX + sigBoxWidth - 45,
-          y: boxY - 18,
-          size: TINY_SIZE,
-          font: font,
-          color: BLACK,
-        });
+      // Month label - centered at top in blue
+      drawCenteredText(page, displayMonth, boxX, boxY - 8, sigBoxWidth, boldFont, TEXT_SIZE, BLUE);
+
+      // Date on right side - only show if month has been signed
+      // Center vertically: boxY - (sigBoxHeight / 2) - (fontSize / 2)
+      if (monthData.signature) {
+        const dateStr = formatDateForPDF(monthData.date);
+        if (dateStr) {
+          const dateFontSize = 10;
+          const dateCenterY = boxY - (sigBoxHeight / 2) - (dateFontSize / 3);
+          page.drawText(dateStr, {
+            x: boxX + sigBoxWidth - 54,
+            y: dateCenterY,
+            size: dateFontSize,
+            font: font,
+            color: BLACK,
+          });
+        }
       }
       
       // Signature indicator
       if (monthData.signature) {
+        console.log(`Processing signature for ${month}...`);
         try {
           // Extract base64 data from data URL (format: data:image/png;base64,...)
           const base64Match = monthData.signature.match(/^data:image\/(png|jpeg);base64,(.+)$/);
+          console.log('Base64 match:', base64Match ? 'Found' : 'Not found');
+
           if (base64Match) {
             const base64Data = base64Match[2];
+            console.log('Base64 data length:', base64Data.length);
 
             // Convert base64 to Uint8Array
             const binaryString = atob(base64Data);
@@ -496,23 +461,29 @@ async function drawPage1(
             for (let i = 0; i < binaryString.length; i++) {
               sigBytes[i] = binaryString.charCodeAt(i);
             }
+            console.log('Signature bytes length:', sigBytes.length);
 
             // Embed the PNG image
             const sigImage = await page.doc.embedPng(sigBytes);
+            console.log('PNG embedded successfully');
 
             // Draw signature image in the signature box
             // Calculate aspect ratio to fit signature properly
             const sigDims = sigImage.scale(1);
-            const maxWidth = 60;
-            const maxHeight = 15;
+            const maxWidth = sigBoxWidth - 60;  // Leave room for date on right
+            const maxHeight = 13;  // Adjusted for 20px height box
             const scale = Math.min(maxWidth / sigDims.width, maxHeight / sigDims.height);
 
+            console.log(`Drawing signature at x:${boxX + 4}, y:${boxY - sigBoxHeight + 4}, width:${sigDims.width * scale}, height:${sigDims.height * scale}`);
             page.drawImage(sigImage, {
               x: boxX + 4,
               y: boxY - sigBoxHeight + 4,
               width: sigDims.width * scale,
               height: sigDims.height * scale,
             });
+            console.log('Signature drawn successfully');
+          } else {
+            console.error('Signature format did not match expected pattern');
           }
         } catch (error) {
           console.error('Failed to embed signature:', error);
@@ -526,34 +497,35 @@ async function drawPage1(
           });
         }
       }
-      
+
       // Draw signature line
-      drawLine(page, boxX + 3, boxY - sigBoxHeight + 5, boxX + 65, boxY - sigBoxHeight + 5);
+      drawLine(page, boxX + 3, boxY - sigBoxHeight + 5, boxX + 110, boxY - sigBoxHeight + 5);
     }
   }
   
   // === FOOTER ===
-  const footerY = 15;
-  
+  // Footer at bottom
+  const footerTextY = 8;
+
   page.drawText('* Inspection of these items meet the minimum requirements of 34505 CVC', {
     x: marginLeft,
-    y: footerY,
+    y: footerTextY,
     size: TINY_SIZE,
     font: font,
     color: RED,
   });
-  
+
   page.drawText('Page 1 of 4 - Generated by CHP 108A Inspector', {
     x: PAGE_WIDTH / 2 - 60,
-    y: footerY,
+    y: footerTextY,
     size: TINY_SIZE,
     font: font,
     color: GRAY,
   });
-  
+
   page.drawText('Form may be reproduced privately—bulk supplies are not available from the CHP', {
     x: PAGE_WIDTH - marginRight - 220,
-    y: footerY,
+    y: footerTextY,
     size: TINY_SIZE,
     font: font,
     color: GRAY,

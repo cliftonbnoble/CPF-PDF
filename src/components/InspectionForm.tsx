@@ -101,11 +101,11 @@ export default function InspectionForm() {
     showNotification('info', 'All months set to DEF');
   }, [showNotification]);
 
-  // Handle January date change - auto-calculate subsequent dates
+  // Handle date change - auto-calculate from January, allow manual edits for all months
   const handleDateChange = useCallback(
     (month: Month, date: string) => {
       if (month === 'JAN') {
-        // Calculate all subsequent dates (+45 days each)
+        // Calculate all subsequent dates (+45 days each) when January changes
         const calculatedDates = calculateInspectionDates(date);
 
         setFormData((prev) => {
@@ -126,7 +126,7 @@ export default function InspectionForm() {
           );
         }
       } else {
-        // Allow manual override for other months if needed
+        // Allow manual override for any month
         setFormData((prev) => ({
           ...prev,
           months: {
@@ -221,6 +221,24 @@ export default function InspectionForm() {
     }
   }, [currentSignature, showNotification]);
 
+  // Unsign a specific month
+  const handleUnsignMonth = useCallback(
+    (month: Month) => {
+      setFormData((prev) => ({
+        ...prev,
+        months: {
+          ...prev.months,
+          [month]: {
+            ...prev.months[month],
+            signature: '',
+          },
+        },
+      }));
+      showNotification('info', `${month} unsigned successfully`);
+    },
+    [showNotification]
+  );
+
   // Generate and download PDF
   const handleGeneratePDF = useCallback(async () => {
     setIsGenerating(true);
@@ -300,11 +318,18 @@ export default function InspectionForm() {
                 Enter the <strong>January inspection date</strong> - subsequent months
                 will auto-calculate (+45 days each)
               </li>
+              <li>
+                <strong>Edit any date or mileage</strong> as needed - all fields are editable
+              </li>
               <li>Draw your signature in the signature pad</li>
               <li>
-                Click &quot;Sign All&quot; to apply signature to all months with OK/DEF checked
+                Click &quot;Sign All&quot; to apply signature to all months with OK/DEF checked, or sign
+                individual months
               </li>
-              <li>Generate and download the filled PDF</li>
+              <li>
+                Use &quot;Unsign&quot; button to remove a signature from any month if needed
+              </li>
+              <li>Generate and download the filled PDF with your current data</li>
             </ol>
           </div>
 
@@ -332,6 +357,7 @@ export default function InspectionForm() {
               currentSignature={currentSignature}
               onSignMonth={handleSignMonth}
               onSignAll={handleSignAll}
+              onUnsignMonth={handleUnsignMonth}
             />
           </div>
 

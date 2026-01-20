@@ -4,7 +4,14 @@
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
       "Bash(npm view:*)",
-      "Bash(npx wrangler pages deploy:*)"
+      "Bash(npx wrangler pages deploy:*)",
+      "Bash(npx wrangler login)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

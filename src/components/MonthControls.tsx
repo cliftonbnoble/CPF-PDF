@@ -15,6 +15,7 @@ interface MonthControlsProps {
   currentSignature: string;
   onSignMonth: (month: Month) => void;
   onSignAll: () => void;
+  onUnsignMonth: (month: Month) => void;
 }
 
 export default function MonthControls({
@@ -28,6 +29,7 @@ export default function MonthControls({
   currentSignature,
   onSignMonth,
   onSignAll,
+  onUnsignMonth,
 }: MonthControlsProps) {
   // Count months that have OK or DEF checked
   const signableMonths = MONTHS.filter(m => monthsData[m].ok || monthsData[m].def);
@@ -137,18 +139,13 @@ export default function MonthControls({
                     />
                   </td>
                   <td className="px-4 py-3">
-                    {isJanuary ? (
-                      <input
-                        type="date"
-                        value={data.date}
-                        onChange={(e) => onDateChange(month, e.target.value)}
-                        className="block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      />
-                    ) : (
-                      <span className="text-gray-600">
-                        {data.date ? formatDateForDisplay(data.date) : '-'}
-                      </span>
-                    )}
+                    <input
+                      type="date"
+                      value={data.date}
+                      onChange={(e) => onDateChange(month, e.target.value)}
+                      className="block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      placeholder={isJanuary ? 'Enter first date' : 'Auto-calculated'}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     <input
@@ -169,18 +166,28 @@ export default function MonthControls({
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button
-                      type="button"
-                      onClick={() => onSignMonth(month)}
-                      disabled={!canSign}
-                      className={`px-3 py-1 text-xs rounded-md ${
-                        canSign
-                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      Sign
-                    </button>
+                    {data.signature ? (
+                      <button
+                        type="button"
+                        onClick={() => onUnsignMonth(month)}
+                        className="px-3 py-1 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200"
+                      >
+                        Unsign
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onSignMonth(month)}
+                        disabled={!canSign}
+                        className={`px-3 py-1 text-xs rounded-md ${
+                          canSign
+                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Sign
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

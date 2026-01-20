@@ -103,7 +103,7 @@ export function createEmptyFormData(): InspectionFormData {
 
   return {
     vehicle: {
-      carrierName: '',
+      carrierName: 'California Charter Bus & Tours',
       unitNumber: '',
       year: '',
       make: '',

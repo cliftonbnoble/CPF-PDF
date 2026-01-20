@@ -31,15 +31,15 @@ export default function SignaturePad({ onSignature, currentSignature, onClear }:
       <label className="block text-sm font-medium text-gray-700">
         Inspector Signature
       </label>
-      <div className="border-2 border-gray-300 rounded-lg bg-white">
+      <div className="border-2 border-gray-300 rounded-lg bg-white w-full max-w-3xl">
         <SignatureCanvas
           ref={sigRef}
           onEnd={handleEnd}
           penColor="black"
           canvasProps={{
-            width: 400,
+            width: 700,
             height: 150,
-            className: 'rounded-lg',
+            className: 'rounded-lg w-full',
           }}
           backgroundColor="white"
         />

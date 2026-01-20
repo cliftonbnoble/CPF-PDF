@@ -16,7 +16,8 @@ export function getMonthAbbreviation(dateStr: string): Month {
 
 /**
  * Calculate inspection dates starting from first date, adding 45 days for each subsequent inspection.
- * Returns an array of 12 inspection records with calculated dates and corresponding month labels.
+ * Returns a record mapping fixed month keys (JAN-DEC) to calculated dates.
+ * The display layer will show the actual calendar month based on the date.
  */
 export function calculateInspectionDates(firstDateStr: string): Record<Month, string> {
   const result: Record<Month, string> = {} as Record<Month, string>;
@@ -36,25 +37,13 @@ export function calculateInspectionDates(firstDateStr: string): Record<Month, st
   }
 
   // Calculate 12 inspections, each 45 days apart
-  // Assign each date to the month key that matches the actual calendar month
+  // Store them sequentially in the JAN-DEC keys
+  // The display logic will show the correct calendar month for each date
   let currentDate = firstDate;
-  const usedMonths = new Set<Month>();
 
   for (let i = 0; i < 12; i++) {
     const dateStr = format(currentDate, 'yyyy-MM-dd');
-    const monthAbbrev = getMonthAbbreviation(dateStr);
-
-    // If this month is already used, find the next available month
-    let targetMonth = monthAbbrev;
-    let monthIndex = MONTHS.indexOf(monthAbbrev);
-
-    while (usedMonths.has(targetMonth)) {
-      monthIndex = (monthIndex + 1) % 12;
-      targetMonth = MONTHS[monthIndex];
-    }
-
-    result[targetMonth] = dateStr;
-    usedMonths.add(targetMonth);
+    result[MONTHS[i]] = dateStr;
 
     // Add 45 days for next inspection
     if (i < 11) {

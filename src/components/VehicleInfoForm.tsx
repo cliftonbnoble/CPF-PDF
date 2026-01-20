@@ -28,10 +28,9 @@ export default function VehicleInfoForm({ vehicle, onChange }: VehicleInfoFormPr
           </label>
           <input
             type="text"
-            value={vehicle.carrierName}
-            onChange={handleChange('carrierName')}
-            placeholder="e.g., ABC Transit Co."
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            value="California Charter Bus & Tours"
+            readOnly
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-700 cursor-not-allowed"
           />
         </div>
         <div>
