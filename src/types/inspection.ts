@@ -33,12 +33,46 @@ export interface VehicleInfo {
   year: string;
   make: string;
   licenseNumber: string;
+  hasAirBrakes: boolean;
 }
 
 export interface InspectionFormData {
   vehicle: VehicleInfo;
   months: Record<Month, MonthInspection>;
 }
+
+// Vehicle fleet data
+export interface FleetVehicle {
+  unitNumber: string;
+  licenseNumber: string;
+  make: string;
+  model: string;
+  hasAirBrakes: boolean;
+  year: string;
+}
+
+export const FLEET_VEHICLES: FleetVehicle[] = [
+  { unitNumber: 'Sprinter 5', licenseNumber: '52295R3', make: 'Merz', model: '3500', hasAirBrakes: false, year: '2023' },
+  { unitNumber: 'Sprinter 6', licenseNumber: '52293R3', make: 'Merz', model: '3500', hasAirBrakes: false, year: '2023' },
+  { unitNumber: 'Tiffany 6', licenseNumber: '96689D2', make: 'Ford', model: 'F-750', hasAirBrakes: true, year: '2012' },
+  { unitNumber: 'Tiffany 8', licenseNumber: '15191D2', make: 'Ford', model: 'E-450', hasAirBrakes: false, year: '2017' },
+  { unitNumber: 'Tiffany 9', licenseNumber: '14709D2', make: 'Ford', model: 'F-650', hasAirBrakes: false, year: '2015' },
+  { unitNumber: 'Tiffany 10', licenseNumber: '87355G2', make: 'Ford', model: 'E-450', hasAirBrakes: false, year: '2017' },
+  { unitNumber: 'Tiffany 11', licenseNumber: '26513P2', make: 'Ford', model: 'F-550', hasAirBrakes: false, year: '2017' },
+  { unitNumber: 'Tiffany 12', licenseNumber: '26512P2', make: 'Ford', model: 'F-550', hasAirBrakes: false, year: '2017' },
+  { unitNumber: 'Tiffany 14', licenseNumber: '26810P2', make: 'Ford', model: 'F-550', hasAirBrakes: false, year: '2018' },
+  { unitNumber: 'Tiffany 15', licenseNumber: '32612W2', make: 'Ford', model: 'E-450', hasAirBrakes: false, year: '2019' },
+  { unitNumber: 'Tiffany 16', licenseNumber: '18533B3', make: 'Ford', model: 'F-750', hasAirBrakes: true, year: '2015' },
+  { unitNumber: 'Tiffany 17', licenseNumber: '14343G3', make: 'Ford', model: 'F-650', hasAirBrakes: true, year: '2016' },
+  { unitNumber: 'Tiffany 18', licenseNumber: '53825P3', make: 'Ford', model: 'F-650', hasAirBrakes: true, year: '2016' },
+  { unitNumber: 'Tiffany 20', licenseNumber: '53740G4', make: 'Freightliner', model: 'M2', hasAirBrakes: true, year: '2020' },
+];
+
+// Air brake related inspection items (0-indexed) - inactive when hasAirBrakes = false
+export const AIR_BRAKE_ITEMS = [22, 23, 24, 25, 26, 31] as const; // Items 23, 24, 25, 26, 27, 32
+
+// Hydraulic brake related inspection items (0-indexed) - inactive when hasAirBrakes = true
+export const HYDRAULIC_BRAKE_ITEMS = [19, 20] as const; // Items 20, 21
 
 // The 40 inspection items from CHP 108A Page 1
 export const INSPECTION_ITEMS = [
@@ -108,6 +142,7 @@ export function createEmptyFormData(): InspectionFormData {
       year: '',
       make: '',
       licenseNumber: '',
+      hasAirBrakes: false,
     },
     months,
   };

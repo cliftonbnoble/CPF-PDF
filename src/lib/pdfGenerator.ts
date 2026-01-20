@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
-import { InspectionFormData, MONTHS, MONTH_FULL_NAMES, INSPECTION_ITEMS, Month } from '@/types/inspection';
+import { InspectionFormData, MONTHS, MONTH_FULL_NAMES, INSPECTION_ITEMS, Month, AIR_BRAKE_ITEMS } from '@/types/inspection';
 import { formatDateForPDF, getMonthAbbreviation } from './dateUtils';
 
 // Page dimensions (Letter size - Landscape)
@@ -321,12 +321,15 @@ async function drawPage1(
 
   // === INSPECTION ITEMS (40 rows) ===
   const dataStartY = currentY;
-  
+  const hasAirBrakes = vehicle.hasAirBrakes;
+
   for (let row = 0; row < 40; row++) {
     const rowY = dataStartY - (row * dataRowHeight);
     const itemNum = row + 1;
     const isStarred = itemNum <= 21; // Items 1-21 have asterisks per 34505 CVC
-    
+    const isAirBrakeItem = AIR_BRAKE_ITEMS.includes(row);
+    const isInactive = isAirBrakeItem && !hasAirBrakes;
+
     // Item number cell
     drawRect(page, tableStartX, rowY - dataRowHeight, itemNumWidth, dataRowHeight);
     page.drawText(`${itemNum}.`, {
@@ -334,12 +337,12 @@ async function drawPage1(
       y: rowY - dataRowHeight + 2,
       size: TINY_SIZE,
       font: font,
-      color: BLACK,
+      color: isInactive ? GRAY : BLACK,
     });
-    
+
     // Item description cell
     drawRect(page, tableStartX + itemNumWidth, rowY - dataRowHeight, itemDescWidth, dataRowHeight);
-    
+
     // Truncate long descriptions to fit
     const desc: string = INSPECTION_ITEMS[row];
     const maxDescWidth = itemDescWidth - 8;
@@ -350,35 +353,52 @@ async function drawPage1(
     if (truncatedDesc.length < desc.length) {
       truncatedDesc = truncatedDesc.slice(0, -3) + '...';
     }
-    
+
     // Add asterisk for CVC items
     const prefix = isStarred ? '* ' : '  ';
+    const textY = rowY - dataRowHeight + 2;
+    const textX = tableStartX + itemNumWidth + 2;
+
     page.drawText(prefix + truncatedDesc, {
-      x: tableStartX + itemNumWidth + 2,
-      y: rowY - dataRowHeight + 2,
+      x: textX,
+      y: textY,
       size: TINY_SIZE,
       font: font,
-      color: BLACK,
+      color: isInactive ? GRAY : BLACK,
     });
-    
+
+    // Add strike-through for inactive air brake items
+    if (isInactive) {
+      const textWidth = font.widthOfTextAtSize(prefix + truncatedDesc, TINY_SIZE);
+      page.drawLine({
+        start: { x: textX, y: textY + 2 },
+        end: { x: textX + textWidth, y: textY + 2 },
+        thickness: 0.5,
+        color: GRAY,
+      });
+    }
+
     // Month columns with checkmarks
     for (let i = 0; i < 12; i++) {
       const month = MONTHS[i];
       const colX = tableStartX + itemNumWidth + itemDescWidth + (i * monthColWidth);
-      
+
       // Draw cell border
       drawRect(page, colX, rowY - dataRowHeight, monthColWidth, dataRowHeight);
-      
+
       // Draw vertical line between OK and DEF
       drawLine(page, colX + okDefWidth, rowY, colX + okDefWidth, rowY - dataRowHeight);
-      
+
       // Draw checkmarks - using X character (WinAnsi compatible)
-      const monthData = months[month];
-      if (monthData.ok) {
-        drawCenteredText(page, 'X', colX, rowY - dataRowHeight + 2.5, okDefWidth, font, TEXT_SIZE + 1);
-      }
-      if (monthData.def) {
-        drawCenteredText(page, 'X', colX + okDefWidth, rowY - dataRowHeight + 2.5, okDefWidth, font, TEXT_SIZE + 1);
+      // Skip checkmarks for inactive air brake items
+      if (!isInactive) {
+        const monthData = months[month];
+        if (monthData.ok) {
+          drawCenteredText(page, 'X', colX, rowY - dataRowHeight + 2.5, okDefWidth, font, TEXT_SIZE + 1);
+        }
+        if (monthData.def) {
+          drawCenteredText(page, 'X', colX + okDefWidth, rowY - dataRowHeight + 2.5, okDefWidth, font, TEXT_SIZE + 1);
+        }
       }
     }
   }
