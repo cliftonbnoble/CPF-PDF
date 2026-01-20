@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
-import { InspectionFormData, MONTHS, MONTH_FULL_NAMES, INSPECTION_ITEMS, Month, AIR_BRAKE_ITEMS } from '@/types/inspection';
+import { InspectionFormData, MONTHS, MONTH_FULL_NAMES, INSPECTION_ITEMS, Month, AIR_BRAKE_ITEMS, HYDRAULIC_BRAKE_ITEMS } from '@/types/inspection';
 import { formatDateForPDF, getMonthAbbreviation } from './dateUtils';
 
 // Page dimensions (Letter size - Landscape)
@@ -327,8 +327,9 @@ async function drawPage1(
     const rowY = dataStartY - (row * dataRowHeight);
     const itemNum = row + 1;
     const isStarred = itemNum <= 21; // Items 1-21 have asterisks per 34505 CVC
-    const isAirBrakeItem = AIR_BRAKE_ITEMS.includes(row);
-    const isInactive = isAirBrakeItem && !hasAirBrakes;
+    const isAirBrakeItem = (AIR_BRAKE_ITEMS as readonly number[]).includes(row);
+    const isHydraulicBrakeItem = (HYDRAULIC_BRAKE_ITEMS as readonly number[]).includes(row);
+    const isInactive = (isAirBrakeItem && !hasAirBrakes) || (isHydraulicBrakeItem && hasAirBrakes);
 
     // Item number cell
     drawRect(page, tableStartX, rowY - dataRowHeight, itemNumWidth, dataRowHeight);
