@@ -14,7 +14,6 @@ interface MonthControlsProps {
   onMileageChange: (month: Month, mileage: string) => void;
   currentSignature: string;
   onSignMonth: (month: Month) => void;
-  onSignAll: () => void;
   onUnsignMonth: (month: Month) => void;
 }
 
@@ -28,12 +27,8 @@ export default function MonthControls({
   onMileageChange,
   currentSignature,
   onSignMonth,
-  onSignAll,
   onUnsignMonth,
 }: MonthControlsProps) {
-  // Count months that have OK or DEF checked
-  const signableMonths = MONTHS.filter(m => monthsData[m].ok || monthsData[m].def);
-  const unsignedSignableMonths = signableMonths.filter(m => !monthsData[m].signature);
 
   return (
     <div className="space-y-6">
@@ -55,24 +50,7 @@ export default function MonthControls({
           >
             ⚠ Set All DEF
           </button>
-          <button
-            type="button"
-            onClick={onSignAll}
-            disabled={!currentSignature || unsignedSignableMonths.length === 0}
-            className={`px-4 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              currentSignature && unsignedSignableMonths.length > 0
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            ✍ Sign All ({unsignedSignableMonths.length} months)
-          </button>
         </div>
-        {!currentSignature && (
-          <p className="text-sm text-blue-700 mt-2">
-            ℹ️ Add your signature below to enable signing
-          </p>
-        )}
       </div>
 
       {/* Month Grid */}

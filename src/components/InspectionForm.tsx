@@ -356,7 +356,6 @@ export default function InspectionForm() {
               onMileageChange={handleMileageChange}
               currentSignature={currentSignature}
               onSignMonth={handleSignMonth}
-              onSignAll={handleSignAll}
               onUnsignMonth={handleUnsignMonth}
             />
           </div>
@@ -367,6 +366,13 @@ export default function InspectionForm() {
               onSignature={handleSignature}
               currentSignature={currentSignature}
               onClear={handleClearSignature}
+              onSignAll={handleSignAll}
+              unsignedSignableMonthsCount={
+                MONTHS.filter(m =>
+                  (formData.months[m].ok || formData.months[m].def) &&
+                  !formData.months[m].signature
+                ).length
+              }
             />
           </div>
 

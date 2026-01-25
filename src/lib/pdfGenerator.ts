@@ -11,6 +11,7 @@ const BLACK = rgb(0, 0, 0);
 const GRAY = rgb(0.4, 0.4, 0.4);
 const RED = rgb(0.7, 0, 0);
 const BLUE = rgb(0, 0, 0.7);
+const LIGHT_BLUE = rgb(0.85, 0.9, 0.95); // Light blue/gray for checkbox background
 
 // Font sizes
 const TITLE_SIZE = 12;
@@ -27,9 +28,12 @@ export async function generatePDF(formData: InspectionFormData): Promise<Uint8Ar
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+  // Get the form for creating interactive checkboxes
+  const form = pdfDoc.getForm();
+
   // Add Page 1 - Monthly Inspection Checklist (Landscape)
   const page1 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-  await drawPage1(page1, formData, helvetica, helveticaBold);
+  await drawPage1(page1, formData, helvetica, helveticaBold, form);
 
   return pdfDoc.save();
 }
@@ -76,7 +80,8 @@ async function drawPage1(
   page: PDFPage,
   formData: InspectionFormData,
   font: PDFFont,
-  boldFont: PDFFont
+  boldFont: PDFFont,
+  form: ReturnType<PDFDocument['getForm']>
 ) {
   const { vehicle, months } = formData;
   
@@ -132,9 +137,9 @@ async function drawPage1(
     font: font,
     color: RED,
   });
-  
+
   // === VEHICLE INFO AND TABLE HEADER SECTION ===
-  currentY -= 10;
+  currentY -= 4;
   const headerRow1Height = 20;
   const headerRow2Height = 20;
 
@@ -317,7 +322,7 @@ async function drawPage1(
   currentY = tableStartY - headerRow1Height - headerRow2Height - 2;
 
   // Row heights for inspection items
-  const dataRowHeight = 9.8;
+  const dataRowHeight = 10.8;
 
   // === INSPECTION ITEMS (40 rows) ===
   const dataStartY = currentY;
@@ -335,7 +340,7 @@ async function drawPage1(
     drawRect(page, tableStartX, rowY - dataRowHeight, itemNumWidth, dataRowHeight);
     page.drawText(`${itemNum}.`, {
       x: tableStartX + 2,
-      y: rowY - dataRowHeight + 2,
+      y: rowY - (dataRowHeight / 2) - (TINY_SIZE / 2),
       size: TINY_SIZE,
       font: font,
       color: isInactive ? GRAY : BLACK,
@@ -357,7 +362,7 @@ async function drawPage1(
 
     // Add asterisk for CVC items
     const prefix = isStarred ? '* ' : '  ';
-    const textY = rowY - dataRowHeight + 2;
+    const textY = rowY - (dataRowHeight / 2) - (TINY_SIZE / 2);
     const textX = tableStartX + itemNumWidth + 2;
 
     page.drawText(prefix + truncatedDesc, {
@@ -390,15 +395,49 @@ async function drawPage1(
       // Draw vertical line between OK and DEF
       drawLine(page, colX + okDefWidth, rowY, colX + okDefWidth, rowY - dataRowHeight);
 
-      // Draw checkmarks - using X character (WinAnsi compatible)
-      // Skip checkmarks for inactive air brake items
+      // Create interactive checkboxes for OK and DEF
+      // Skip for inactive air brake items
       if (!isInactive) {
         const monthData = months[month];
+
+        // Calculate checkbox size and position
+        const checkboxSize = 8;
+        const okCheckboxX = colX + (okDefWidth / 2) - (checkboxSize / 2);
+        const defCheckboxX = colX + okDefWidth + (okDefWidth / 2) - (checkboxSize / 2);
+        const checkboxY = rowY - (dataRowHeight / 2) - (checkboxSize / 2);
+
+        // Create OK checkbox with light blue background and dark blue checkmark
+        const okCheckbox = form.createCheckBox(`item${itemNum}.${month}.ok`);
+        okCheckbox.addToPage(page, {
+          x: okCheckboxX,
+          y: checkboxY,
+          width: checkboxSize,
+          height: checkboxSize,
+          borderWidth: 0.5,
+          borderColor: BLUE,
+          backgroundColor: LIGHT_BLUE,
+          textColor: BLUE, // Checkmark color
+        });
+        // Pre-check if marked OK in the form
         if (monthData.ok) {
-          drawCenteredText(page, 'X', colX, rowY - dataRowHeight + 2.5, okDefWidth, font, TEXT_SIZE + 1);
+          okCheckbox.check();
         }
+
+        // Create DEF checkbox with light blue background and dark blue checkmark
+        const defCheckbox = form.createCheckBox(`item${itemNum}.${month}.def`);
+        defCheckbox.addToPage(page, {
+          x: defCheckboxX,
+          y: checkboxY,
+          width: checkboxSize,
+          height: checkboxSize,
+          borderWidth: 0.5,
+          borderColor: BLUE,
+          backgroundColor: LIGHT_BLUE,
+          textColor: BLUE, // Checkmark color
+        });
+        // Pre-check if marked DEF in the form
         if (monthData.def) {
-          drawCenteredText(page, 'X', colX + okDefWidth, rowY - dataRowHeight + 2.5, okDefWidth, font, TEXT_SIZE + 1);
+          defCheckbox.check();
         }
       }
     }

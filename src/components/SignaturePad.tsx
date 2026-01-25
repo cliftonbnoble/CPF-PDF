@@ -7,9 +7,11 @@ interface SignaturePadProps {
   onSignature: (dataUrl: string) => void;
   currentSignature?: string;
   onClear: () => void;
+  onSignAll?: () => void;
+  unsignedSignableMonthsCount?: number;
 }
 
-export default function SignaturePad({ onSignature, currentSignature, onClear }: SignaturePadProps) {
+export default function SignaturePad({ onSignature, currentSignature, onClear, onSignAll, unsignedSignableMonthsCount = 0 }: SignaturePadProps) {
   const sigRef = useRef<SignatureCanvas>(null);
 
   const handleEnd = useCallback(() => {
@@ -44,7 +46,7 @@ export default function SignaturePad({ onSignature, currentSignature, onClear }:
           backgroundColor="white"
         />
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <button
           type="button"
           onClick={handleClear}
@@ -52,6 +54,20 @@ export default function SignaturePad({ onSignature, currentSignature, onClear }:
         >
           Clear Signature
         </button>
+        {onSignAll && (
+          <button
+            type="button"
+            onClick={onSignAll}
+            disabled={!currentSignature || unsignedSignableMonthsCount === 0}
+            className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              currentSignature && unsignedSignableMonthsCount > 0
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            ✍ Sign All ({unsignedSignableMonthsCount} months)
+          </button>
+        )}
         {currentSignature && (
           <span className="flex items-center text-sm text-green-600">
             ✓ Signature captured
