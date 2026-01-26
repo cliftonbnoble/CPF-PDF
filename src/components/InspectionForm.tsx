@@ -69,6 +69,42 @@ export default function InspectionForm() {
     }));
   }, []);
 
+  // Toggle individual percentage for a month
+  const handleTogglePercentage = useCallback((month: Month, percentage: 3 | 5 | 10) => {
+    setFormData((prev) => {
+      const currentPercentage = prev.months[month].defPercentage;
+      const newPercentage = currentPercentage === percentage ? 0 : percentage;
+
+      // Calculate how many random items to select
+      const itemCount = newPercentage === 3 ? 1 : newPercentage === 5 ? 2 : newPercentage === 10 ? 4 : 0;
+
+      // Generate random items if turning on
+      let randomItems: number[] = [];
+      if (newPercentage > 0) {
+        while (randomItems.length < itemCount) {
+          const item = Math.floor(Math.random() * 40);
+          if (!randomItems.includes(item)) {
+            randomItems.push(item);
+          }
+        }
+      }
+
+      return {
+        ...prev,
+        months: {
+          ...prev.months,
+          [month]: {
+            ...prev.months[month],
+            defPercentage: newPercentage,
+            randomDefItems: randomItems,
+            ok: newPercentage > 0, // Set to OK if percentage is selected
+            def: false,
+          },
+        },
+      };
+    });
+  }, []);
+
   // Set all months to OK
   const handleSetAllOk = useCallback(() => {
     setFormData((prev) => {
@@ -78,6 +114,8 @@ export default function InspectionForm() {
           ...newMonths[month],
           ok: true,
           def: false,
+          defPercentage: 0,
+          randomDefItems: [],
         };
       }
       return { ...prev, months: newMonths };
@@ -94,11 +132,85 @@ export default function InspectionForm() {
           ...newMonths[month],
           ok: false,
           def: true,
+          defPercentage: 0,
+          randomDefItems: [],
         };
       }
       return { ...prev, months: newMonths };
     });
     showNotification('info', 'All months set to DEF');
+  }, [showNotification]);
+
+  // Set DEF 3% (1 random item per month)
+  const handleSetDef3Percent = useCallback(() => {
+    setFormData((prev) => {
+      const newMonths = { ...prev.months };
+      for (const month of MONTHS) {
+        // Randomly select 1 item (3% of 40 items ≈ 1 item)
+        const randomItems = [Math.floor(Math.random() * 40)];
+        newMonths[month] = {
+          ...newMonths[month],
+          ok: true,
+          def: false,
+          defPercentage: 3,
+          randomDefItems: randomItems,
+        };
+      }
+      return { ...prev, months: newMonths };
+    });
+    showNotification('success', '3% DEF randomizer applied (1 item per month)');
+  }, [showNotification]);
+
+  // Set DEF 5% (2 random items per month)
+  const handleSetDef5Percent = useCallback(() => {
+    setFormData((prev) => {
+      const newMonths = { ...prev.months };
+      for (const month of MONTHS) {
+        // Randomly select 2 unique items (5% of 40 items = 2 items)
+        const randomItems: number[] = [];
+        while (randomItems.length < 2) {
+          const item = Math.floor(Math.random() * 40);
+          if (!randomItems.includes(item)) {
+            randomItems.push(item);
+          }
+        }
+        newMonths[month] = {
+          ...newMonths[month],
+          ok: true,
+          def: false,
+          defPercentage: 5,
+          randomDefItems: randomItems,
+        };
+      }
+      return { ...prev, months: newMonths };
+    });
+    showNotification('success', '5% DEF randomizer applied (2 items per month)');
+  }, [showNotification]);
+
+  // Set DEF 10% (4 random items per month)
+  const handleSetDef10Percent = useCallback(() => {
+    setFormData((prev) => {
+      const newMonths = { ...prev.months };
+      for (const month of MONTHS) {
+        // Randomly select 4 unique items (10% of 40 items = 4 items)
+        const randomItems: number[] = [];
+        while (randomItems.length < 4) {
+          const item = Math.floor(Math.random() * 40);
+          if (!randomItems.includes(item)) {
+            randomItems.push(item);
+          }
+        }
+        newMonths[month] = {
+          ...newMonths[month],
+          ok: true,
+          def: false,
+          defPercentage: 10,
+          randomDefItems: randomItems,
+        };
+      }
+      return { ...prev, months: newMonths };
+    });
+    showNotification('success', '10% DEF randomizer applied (4 items per month)');
   }, [showNotification]);
 
   // Handle date change - auto-calculate from January, allow manual edits for all months
@@ -350,8 +462,12 @@ export default function InspectionForm() {
               monthsData={formData.months}
               onToggleOk={handleToggleOk}
               onToggleDef={handleToggleDef}
+              onTogglePercentage={handleTogglePercentage}
               onSetAllOk={handleSetAllOk}
               onSetAllDef={handleSetAllDef}
+              onSetDef3Percent={handleSetDef3Percent}
+              onSetDef5Percent={handleSetDef5Percent}
+              onSetDef10Percent={handleSetDef10Percent}
               onDateChange={handleDateChange}
               onMileageChange={handleMileageChange}
               currentSignature={currentSignature}

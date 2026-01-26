@@ -25,6 +25,8 @@ export interface MonthInspection {
   date: string; // ISO date string
   mileage: string;
   signature: string; // Base64 PNG or empty
+  defPercentage: 0 | 3 | 5 | 10; // Which DEF percentage was selected (0 = none/manual)
+  randomDefItems: number[]; // Array of item indices (0-39) that were randomly selected as DEF
 }
 
 export interface VehicleInfo {
@@ -132,6 +134,8 @@ export function createEmptyFormData(): InspectionFormData {
       date: '',
       mileage: '',
       signature: '',
+      defPercentage: 0,
+      randomDefItems: [],
     };
   }
 

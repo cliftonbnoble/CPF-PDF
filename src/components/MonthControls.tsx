@@ -8,8 +8,12 @@ interface MonthControlsProps {
   monthsData: Record<Month, MonthInspection>;
   onToggleOk: (month: Month) => void;
   onToggleDef: (month: Month) => void;
+  onTogglePercentage: (month: Month, percentage: 3 | 5 | 10) => void;
   onSetAllOk: () => void;
   onSetAllDef: () => void;
+  onSetDef3Percent: () => void;
+  onSetDef5Percent: () => void;
+  onSetDef10Percent: () => void;
   onDateChange: (month: Month, date: string) => void;
   onMileageChange: (month: Month, mileage: string) => void;
   currentSignature: string;
@@ -21,8 +25,12 @@ export default function MonthControls({
   monthsData,
   onToggleOk,
   onToggleDef,
+  onTogglePercentage,
   onSetAllOk,
   onSetAllDef,
+  onSetDef3Percent,
+  onSetDef5Percent,
+  onSetDef10Percent,
   onDateChange,
   onMileageChange,
   currentSignature,
@@ -50,6 +58,27 @@ export default function MonthControls({
           >
             ⚠ Set All DEF
           </button>
+          <button
+            type="button"
+            onClick={onSetDef3Percent}
+            className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 font-medium"
+          >
+            🎲 Set DEF 3%
+          </button>
+          <button
+            type="button"
+            onClick={onSetDef5Percent}
+            className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium"
+          >
+            🎲 Set DEF 5%
+          </button>
+          <button
+            type="button"
+            onClick={onSetDef10Percent}
+            className="px-4 py-2 bg-orange-700 text-white rounded-md hover:bg-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-600 font-medium"
+          >
+            🎲 Set DEF 10%
+          </button>
         </div>
       </div>
 
@@ -58,25 +87,34 @@ export default function MonthControls({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Month
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 OK
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 DEF
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                3%
+              </th>
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                5%
+              </th>
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                10%
+              </th>
+              <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Date
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Mileage
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Signed
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Action
               </th>
             </tr>
@@ -94,13 +132,13 @@ export default function MonthControls({
 
               return (
                 <tr key={month} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="font-medium text-gray-900">{displayMonth}</span>
+                  <td className="px-1 py-2 whitespace-nowrap text-sm">
+                    <span className="font-medium text-gray-900">{displayMonth.slice(0, 3)}</span>
                     {isJanuary && (
-                      <span className="ml-2 text-xs text-blue-600">(Enter date here)</span>
+                      <span className="ml-1 text-xs text-blue-600">*</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-2 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={data.ok}
@@ -108,7 +146,7 @@ export default function MonthControls({
                       className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer"
                     />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-2 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={data.def}
@@ -116,34 +154,58 @@ export default function MonthControls({
                       className="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded cursor-pointer"
                     />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-1 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={data.defPercentage === 3}
+                      onChange={() => onTogglePercentage(month, 3)}
+                      className="h-4 w-4 text-orange-500 focus:ring-orange-400 border-gray-300 rounded cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-1 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={data.defPercentage === 5}
+                      onChange={() => onTogglePercentage(month, 5)}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-1 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={data.defPercentage === 10}
+                      onChange={() => onTogglePercentage(month, 10)}
+                      className="h-4 w-4 text-orange-700 focus:ring-orange-600 border-gray-300 rounded cursor-pointer"
+                    />
+                  </td>
+                  <td className="px-1 py-2">
                     <input
                       type="date"
                       value={data.date}
                       onChange={(e) => onDateChange(month, e.target.value)}
-                      className="block w-full px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="block w-32 px-1 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xs"
                       placeholder={isJanuary ? 'Enter first date' : 'Auto-calculated'}
                     />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-1 py-2">
                     <input
                       type="text"
                       value={data.mileage}
                       onChange={(e) => onMileageChange(month, e.target.value)}
                       placeholder="e.g., 45000"
-                      className="block w-24 px-3 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="block w-24 px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
                     />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-2 py-3 text-center">
                     {data.signature ? (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        ✓ Signed
+                        ✓
                       </span>
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-2 py-3 text-center">
                     {data.signature ? (
                       <button
                         type="button"

@@ -140,7 +140,7 @@ async function drawPage1(
 
   // === VEHICLE INFO AND TABLE HEADER SECTION ===
   currentY -= 4;
-  const headerRow1Height = 20;
+  const headerRow1Height = 16;  // Reduced from 20 to save space
   const headerRow2Height = 20;
 
   // Column widths
@@ -160,14 +160,14 @@ async function drawPage1(
   drawRect(page, colX, currentY - headerRow1Height, carrierWidth, headerRow1Height);
   page.drawText('CARRIER NAME', {
     x: colX + 3,
-    y: currentY - 6,
+    y: currentY - 5,
     size: TINY_SIZE,
     font: font,
     color: BLUE,
   });
   page.drawText(vehicle.carrierName || '', {
     x: colX + 3,
-    y: currentY - 16,
+    y: currentY - 13,
     size: SMALL_SIZE,
     font: font,
     color: BLACK,
@@ -179,14 +179,14 @@ async function drawPage1(
   drawRect(page, colX, currentY - headerRow1Height, unitWidth, headerRow1Height);
   page.drawText('UNIT NUMBER', {
     x: colX + 3,
-    y: currentY - 6,
+    y: currentY - 5,
     size: TINY_SIZE,
     font: font,
     color: BLUE,
   });
   page.drawText(vehicle.unitNumber || '', {
     x: colX + 3,
-    y: currentY - 16,
+    y: currentY - 13,
     size: SMALL_SIZE,
     font: font,
     color: BLACK,
@@ -199,7 +199,7 @@ async function drawPage1(
     drawRect(page, colX, currentY - headerRow1Height, monthColWidth, headerRow1Height);
     page.drawText('MILEAGE', {
       x: colX + 2,
-      y: currentY - 6,
+      y: currentY - 5,
       size: TINY_SIZE,
       font: font,
       color: BLUE,
@@ -207,7 +207,7 @@ async function drawPage1(
     // Add mileage value
     const mileage = months[month].mileage;
     if (mileage) {
-      drawCenteredText(page, mileage, colX, currentY - 16, monthColWidth, font, SMALL_SIZE, BLACK);
+      drawCenteredText(page, mileage, colX, currentY - 13, monthColWidth, font, SMALL_SIZE, BLACK);
     }
     colX += monthColWidth;
   }
@@ -319,7 +319,7 @@ async function drawPage1(
   }
 
   // Set currentY to after row 2 for the inspection items table
-  currentY = tableStartY - headerRow1Height - headerRow2Height - 2;
+  currentY = tableStartY - headerRow1Height - headerRow2Height;  // Removed -2 gap to save space
 
   // Row heights for inspection items
   const dataRowHeight = 10.8;
@@ -406,6 +406,9 @@ async function drawPage1(
         const defCheckboxX = colX + okDefWidth + (okDefWidth / 2) - (checkboxSize / 2);
         const checkboxY = rowY - (dataRowHeight / 2) - (checkboxSize / 2);
 
+        // Check if this item is in the random DEF items for this month
+        const isRandomDef = monthData.randomDefItems && monthData.randomDefItems.includes(row);
+
         // Create OK checkbox with light blue background and dark blue checkmark
         const okCheckbox = form.createCheckBox(`item${itemNum}.${month}.ok`);
         okCheckbox.addToPage(page, {
@@ -418,8 +421,8 @@ async function drawPage1(
           backgroundColor: LIGHT_BLUE,
           textColor: BLUE, // Checkmark color
         });
-        // Pre-check if marked OK in the form
-        if (monthData.ok) {
+        // Pre-check OK if: manually marked OK, OR has percentage selected but this item is NOT in randomDefItems
+        if (monthData.ok && !isRandomDef) {
           okCheckbox.check();
         }
 
@@ -435,8 +438,8 @@ async function drawPage1(
           backgroundColor: LIGHT_BLUE,
           textColor: BLUE, // Checkmark color
         });
-        // Pre-check if marked DEF in the form
-        if (monthData.def) {
+        // Pre-check DEF if: manually marked DEF, OR this item is in randomDefItems
+        if (monthData.def || isRandomDef) {
           defCheckbox.check();
         }
       }
@@ -446,7 +449,7 @@ async function drawPage1(
   // === SIGNATURES OF INSPECTORS SECTION ===
   // Position signature section near the bottom, above the footer
   const footerY = 15;
-  const sigSectionHeight = 70; // Height needed for 3 rows of signatures + label
+  const sigSectionHeight = 62; // Reduced from 70 - tighter spacing for signature boxes
   let sigSectionY = footerY + sigSectionHeight;
 
   page.drawText('SIGNATURES OF INSPECTORS', {
@@ -462,9 +465,9 @@ async function drawPage1(
   const horizontalSpacing = 8;
   const availableWidth = PAGE_WIDTH - marginLeft - marginRight - (3 * horizontalSpacing);
   const sigBoxWidth = Math.floor(availableWidth / 4);
-  const sigBoxHeight = 20;  // Shorter to reduce dead space
-  const sigStartY = sigSectionY - 5;
-  
+  const sigBoxHeight = 18;  // Reduced from 20 to save space
+  const sigStartY = sigSectionY - 2;  // Reduced from -5 to bring boxes closer to title
+
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 4; col++) {
       const monthIndex = row * 4 + col;
@@ -473,7 +476,7 @@ async function drawPage1(
       const month = MONTHS[monthIndex];
       const monthData = months[month];
       const boxX = tableStartX + (col * (sigBoxWidth + horizontalSpacing));
-      const boxY = sigStartY - (row * (sigBoxHeight + 1));
+      const boxY = sigStartY - (row * (sigBoxHeight + 0.5));  // Reduced spacing from +1 to +0.5
 
       // Draw signature box
       drawRect(page, boxX, boxY - sigBoxHeight, sigBoxWidth, sigBoxHeight);
