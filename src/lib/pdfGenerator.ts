@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from 'pdf-lib';
-import { InspectionFormData, MONTHS, MONTH_FULL_NAMES, INSPECTION_ITEMS, Month, AIR_BRAKE_ITEMS, HYDRAULIC_BRAKE_ITEMS } from '@/types/inspection';
+import { InspectionFormData, MONTHS, MONTH_FULL_NAMES, INSPECTION_ITEMS, Month, AIR_BRAKE_ITEMS, HYDRAULIC_BRAKE_ITEMS, FLEET_VEHICLES } from '@/types/inspection';
 import { formatDateForPDF, getMonthAbbreviation } from './dateUtils';
 
 // Page dimensions (Letter size - Landscape)
@@ -9,6 +9,7 @@ const PAGE_HEIGHT = 612;
 // Colors
 const BLACK = rgb(0, 0, 0);
 const GRAY = rgb(0.4, 0.4, 0.4);
+const LIGHT_GRAY = rgb(0.9, 0.9, 0.9); // Light gray for table headers
 const RED = rgb(0.7, 0, 0);
 const BLUE = rgb(0, 0, 0.7);
 const LIGHT_BLUE = rgb(0.85, 0.9, 0.95); // Light blue/gray for checkbox background
@@ -35,7 +36,93 @@ export async function generatePDF(formData: InspectionFormData): Promise<Uint8Ar
   const page1 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   await drawPage1(page1, formData, helvetica, helveticaBold, form);
 
+  // Collect all DEF items across all months
+  const defItems = collectDefItems(formData);
+
+  // Add Repair Report pages (only if there are DEF items)
+  if (defItems.length > 0) {
+    const rowsPerPage = 30;
+    const totalRepairPages = Math.ceil(defItems.length / rowsPerPage);
+    const totalPages = 1 + totalRepairPages; // Page 1 + repair pages
+
+    // Create repair report pages (starting at page 4 to match CHP form numbering)
+    for (let pageIndex = 0; pageIndex < totalRepairPages; pageIndex++) {
+      const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+      const startIdx = pageIndex * rowsPerPage;
+      const endIdx = Math.min(startIdx + rowsPerPage, defItems.length);
+      const pageDefItems = defItems.slice(startIdx, endIdx);
+      const currentPageNum = 4 + pageIndex; // Start at page 4
+      const totalPageNum = 3 + totalRepairPages; // Total is 3 + number of repair pages
+
+      await drawRepairReportPage(
+        page,
+        formData,
+        pageDefItems,
+        helvetica,
+        helveticaBold,
+        form,
+        currentPageNum,
+        totalPageNum,
+        startIdx
+      );
+    }
+  }
+
   return pdfDoc.save();
+}
+
+// Helper to collect all DEF items across all months (no duplicates)
+interface DefItem {
+  itemIndex: number;
+  itemDescription: string;
+  month: Month;
+  date: string;
+  mileage: string;
+}
+
+function collectDefItems(formData: InspectionFormData): DefItem[] {
+  const defItems: DefItem[] = [];
+  const seenItems = new Set<number>();
+
+  // Iterate through each month
+  for (const month of MONTHS) {
+    const monthData = formData.months[month];
+
+    // Check if month is marked as DEF
+    if (monthData.def) {
+      // All items are DEF for this month - add all 40 items (if not already seen)
+      for (let i = 0; i < 40; i++) {
+        if (!seenItems.has(i)) {
+          defItems.push({
+            itemIndex: i,
+            itemDescription: INSPECTION_ITEMS[i],
+            month,
+            date: monthData.date,
+            mileage: monthData.mileage,
+          });
+          seenItems.add(i);
+        }
+      }
+    }
+
+    // Check if there are random DEF items for this month
+    if (monthData.randomDefItems && monthData.randomDefItems.length > 0) {
+      for (const itemIndex of monthData.randomDefItems) {
+        if (!seenItems.has(itemIndex)) {
+          defItems.push({
+            itemIndex,
+            itemDescription: INSPECTION_ITEMS[itemIndex],
+            month,
+            date: monthData.date,
+            mileage: monthData.mileage,
+          });
+          seenItems.add(itemIndex);
+        }
+      }
+    }
+  }
+
+  return defItems;
 }
 
 // Helper to draw a rectangle (border only)
@@ -589,6 +676,297 @@ async function drawPage1(
   page.drawText('Form may be reproduced privately—bulk supplies are not available from the CHP', {
     x: PAGE_WIDTH - marginRight - 220,
     y: footerTextY,
+    size: TINY_SIZE,
+    font: font,
+    color: GRAY,
+  });
+}
+
+async function drawRepairReportPage(
+  page: PDFPage,
+  formData: InspectionFormData,
+  defItems: DefItem[],
+  font: PDFFont,
+  boldFont: PDFFont,
+  form: ReturnType<PDFDocument['getForm']>,
+  currentPageNum: number,
+  totalPageNum: number,
+  startRowIndex: number
+) {
+  const { vehicle } = formData;
+
+  // Margins
+  const marginLeft = 20;
+  const marginRight = 20;
+  const marginTop = 18;
+
+  // === HEADER SECTION ===
+  let currentY = PAGE_HEIGHT - marginTop;
+
+  // Title - left side
+  page.drawText('STATE OF CALIFORNIA', {
+    x: marginLeft,
+    y: currentY,
+    size: TEXT_SIZE,
+    font: font,
+    color: BLACK,
+  });
+
+  currentY -= 8;
+  page.drawText('DEPARTMENT OF CALIFORNIA HIGHWAY PATROL', {
+    x: marginLeft,
+    y: currentY,
+    size: TEXT_SIZE,
+    font: font,
+    color: BLACK,
+  });
+
+  currentY -= 12;
+  page.drawText('REPAIR REPORT', {
+    x: marginLeft,
+    y: currentY,
+    size: TITLE_SIZE,
+    font: boldFont,
+    color: BLACK,
+  });
+
+  currentY -= 8;
+  page.drawText('CHP 108A (Rev. 7-05) OPI 062', {
+    x: marginLeft,
+    y: currentY,
+    size: TEXT_SIZE,
+    font: font,
+    color: BLACK,
+  });
+
+  currentY -= 16;
+
+  // === HEADER ROW WITH VEHICLE INFO ===
+  const tableStartX = marginLeft;
+  const tableWidth = PAGE_WIDTH - marginLeft - marginRight;
+  const headerHeight = 16;
+
+  // Draw header row border
+  drawRect(page, tableStartX, currentY - headerHeight, tableWidth, headerHeight);
+
+  // Divide the header into sections (combined Make/Model)
+  const carrierWidth = 180;
+  const unitWidth = 80;
+  const yearWidth = 50;
+  const makeModelWidth = 150;
+  const licenseWidth = tableWidth - carrierWidth - unitWidth - yearWidth - makeModelWidth;
+
+  let colX = tableStartX;
+
+  // CARRIER NAME
+  drawRect(page, colX, currentY - headerHeight, carrierWidth, headerHeight);
+  page.drawText('CARRIER NAME', {
+    x: colX + 3,
+    y: currentY - 5,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.carrierName || '', {
+    x: colX + 3,
+    y: currentY - 13,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += carrierWidth;
+
+  // UNIT NUMBER
+  drawRect(page, colX, currentY - headerHeight, unitWidth, headerHeight);
+  page.drawText('UNIT NUMBER', {
+    x: colX + 3,
+    y: currentY - 5,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.unitNumber || '', {
+    x: colX + 3,
+    y: currentY - 13,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += unitWidth;
+
+  // YEAR
+  drawRect(page, colX, currentY - headerHeight, yearWidth, headerHeight);
+  page.drawText('YEAR', {
+    x: colX + 3,
+    y: currentY - 5,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.year || '', {
+    x: colX + 3,
+    y: currentY - 13,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += yearWidth;
+
+  // MAKE/MODEL (combined)
+  const fleetVehicle = FLEET_VEHICLES.find(v => v.unitNumber === vehicle.unitNumber);
+  const model = fleetVehicle?.model || '';
+  const makeModel = `${vehicle.make || ''} ${model}`.trim();
+
+  drawRect(page, colX, currentY - headerHeight, makeModelWidth, headerHeight);
+  page.drawText('MAKE/MODEL', {
+    x: colX + 3,
+    y: currentY - 5,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(makeModel, {
+    x: colX + 3,
+    y: currentY - 13,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+  colX += makeModelWidth;
+
+  // LICENSE NUMBER
+  drawRect(page, colX, currentY - headerHeight, licenseWidth, headerHeight);
+  page.drawText('LICENSE NUMBER', {
+    x: colX + 3,
+    y: currentY - 5,
+    size: TINY_SIZE,
+    font: font,
+    color: BLUE,
+  });
+  page.drawText(vehicle.licenseNumber || '', {
+    x: colX + 3,
+    y: currentY - 13,
+    size: SMALL_SIZE,
+    font: font,
+    color: BLACK,
+  });
+
+  currentY -= headerHeight;
+
+  // === REPAIR TABLE ===
+  // No gap - table starts immediately after header
+
+  // Table columns
+  const mileageWidth = 90;
+  const dateWidth = 90;
+  const repairWidth = tableWidth - mileageWidth - dateWidth;
+
+  // Table header row with light gray background
+  const tableHeaderHeight = 18;
+  colX = tableStartX;
+
+  // Draw gray background rectangles
+  page.drawRectangle({
+    x: tableStartX,
+    y: currentY - tableHeaderHeight,
+    width: tableWidth,
+    height: tableHeaderHeight,
+    color: LIGHT_GRAY,
+  });
+
+  // Draw borders and text
+  drawRect(page, colX, currentY - tableHeaderHeight, mileageWidth, tableHeaderHeight);
+  drawCenteredText(page, 'MILEAGE', colX, currentY - 12, mileageWidth, boldFont, HEADER_SIZE, BLACK);
+  colX += mileageWidth;
+
+  drawRect(page, colX, currentY - tableHeaderHeight, dateWidth, tableHeaderHeight);
+  drawCenteredText(page, 'DATE', colX, currentY - 12, dateWidth, boldFont, HEADER_SIZE, BLACK);
+  colX += dateWidth;
+
+  drawRect(page, colX, currentY - tableHeaderHeight, repairWidth, tableHeaderHeight);
+  drawCenteredText(page, 'REPAIR', colX, currentY - 12, repairWidth, boldFont, HEADER_SIZE, BLACK);
+
+  currentY -= tableHeaderHeight;
+
+  // Data rows - create 30 rows per page
+  const rowHeight = 16;
+  const maxRows = 30;
+  const cellFontSize = 7;
+
+  for (let i = 0; i < maxRows; i++) {
+    colX = tableStartX;
+
+    // Determine if this row has data from defItems
+    const defItem = i < defItems.length ? defItems[i] : null;
+
+    // Mileage column - editable text field
+    drawRect(page, colX, currentY - rowHeight, mileageWidth, rowHeight);
+    const mileageField = form.createTextField(`mileage_${startRowIndex + i}`);
+    mileageField.setText(defItem?.mileage || '');
+    mileageField.addToPage(page, {
+      x: colX + 1,
+      y: currentY - rowHeight + 3,
+      width: mileageWidth - 2,
+      height: rowHeight - 6,
+      borderWidth: 0,
+      textColor: BLACK,
+    });
+    mileageField.setFontSize(cellFontSize);
+    colX += mileageWidth;
+
+    // Date column - editable text field
+    drawRect(page, colX, currentY - rowHeight, dateWidth, rowHeight);
+    const dateField = form.createTextField(`date_${startRowIndex + i}`);
+    dateField.setText(defItem?.date || '');
+    dateField.addToPage(page, {
+      x: colX + 1,
+      y: currentY - rowHeight + 3,
+      width: dateWidth - 2,
+      height: rowHeight - 6,
+      borderWidth: 0,
+      textColor: BLACK,
+    });
+    dateField.setFontSize(cellFontSize);
+    colX += dateWidth;
+
+    // Repair column - editable text field
+    drawRect(page, colX, currentY - rowHeight, repairWidth, rowHeight);
+    const repairField = form.createTextField(`repair_${startRowIndex + i}`);
+    repairField.setText(defItem?.itemDescription || '');
+    repairField.addToPage(page, {
+      x: colX + 1,
+      y: currentY - rowHeight + 3,
+      width: repairWidth - 2,
+      height: rowHeight - 6,
+      borderWidth: 0,
+      textColor: BLACK,
+    });
+    repairField.setFontSize(cellFontSize);
+
+    currentY -= rowHeight;
+  }
+
+  // === FOOTER ===
+  const footerY = 12;
+  page.drawText(`Page ${currentPageNum} of ${totalPageNum}`, {
+    x: marginLeft,
+    y: footerY,
+    size: TINY_SIZE,
+    font: font,
+    color: GRAY,
+  });
+
+  page.drawText('Form may be reproduced privately—bulk supplies are not available from the CHP', {
+    x: PAGE_WIDTH / 2 - 110,
+    y: footerY,
+    size: TINY_SIZE,
+    font: font,
+    color: GRAY,
+  });
+
+  page.drawText('Chp108A_0419.pdf', {
+    x: PAGE_WIDTH - marginRight - 70,
+    y: footerY,
     size: TINY_SIZE,
     font: font,
     color: GRAY,
